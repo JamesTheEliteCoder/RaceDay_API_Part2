@@ -93,8 +93,9 @@ public class RaceDayDbContext : DbContext
                 table.HasCheckConstraint(
                     "CK_Routes_Distance",
                     "[DistanceKm] > 0"));
+            // The entity is named RaceRoute, while the SQL key is RouteId.
+            entity.HasKey(route => route.RouteId);
 
-            
             entity.Property(route => route.RouteName).HasColumnType("varchar(100)");
             entity.Property(route => route.AreasCovered).HasColumnType("varchar(500)");
             entity.Property(route => route.DistanceKm).HasColumnType("decimal(6,2)");
