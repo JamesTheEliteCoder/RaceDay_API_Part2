@@ -152,7 +152,75 @@ public class RaceDayDbContext : DbContext
                 .OnDelete(DeleteBehavior.NoAction);
         });
 
+        //Enrollmetn mapping to the Enrolments table
+        modelBuilder.Entity<Enrolment>(entity =>
+        {
+            entity.ToTable("Enrolments", table =>
+                table.HasCheckConstraint(
+                    "CK_Enrolments_Status",
+                    "[Status] IN ('Confirmed', 'Cancelled')"));
 
+            entity.Property(enrolment => enrolment.EnrolmentDate)
+                .HasColumnType("datetime2")
+                .HasDefaultValueSql("GETDATE()");
+
+            entity.Property(enrolment => enrolment.Status)
+                .HasColumnType("varchar(20)")
+                .HasDefaultValue("Confirmed");
+
+            // Prevent duplicate enrolments in the same event category.
+            entity.HasIndex(enrolment => new
+            {
+                enrolment.ParticipantId,
+                enrolment.EventId,
+                enrolment.CategoryId
+            })
+                .IsUnique()
+                .HasDatabaseName("UQ_Enrolments_Participant_Event_Category");
+
+            entity.HasOne<User>()
+                .WithMany()
+                .HasForeignKey(enrolment => enrolment.ParticipantId)
+                .HasConstraintName("FK_Enrolments_Users")
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne<Event>()
+                .WithMany()
+                .HasForeignKey(enrolment => enrolment.EventId)
+                .HasConstraintName("FK_Enrolments_Events")
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne<Category>()
+                .WithMany()
+                .HasForeignKey(enrolment => enrolment.CategoryId)
+                .HasConstraintName("FK_Enrolments_Categories")
+                .OnDelete(DeleteBehavior.NoAction);
+        });
+
+
+
+        //Result mapping to the Results table
+        modelBuilder.Entity<Result>(entity =>
+        {
+            entity.ToTable("Results", table =>
+                table.HasCheckConstraint(
+                    "CK_Results_Position",
+                    "[FinishingPosition] > 0"));
+
+            entity.Property(result => result.FinishTime)
+                .HasColumnType("time");
+
+            // Each enrolment can have at most one result.
+            entity.HasIndex(result => result.EnrolmentId)
+                .IsUnique()
+                .HasDatabaseName("UQ_Results_Enrolment");
+
+            entity.HasOne<Enrolment>()
+                .WithMany()
+                .HasForeignKey(result => result.EnrolmentId)
+                .HasConstraintName("FK_Results_Enrolments")
+                .OnDelete(DeleteBehavior.NoAction);
+        });
 
 
 
