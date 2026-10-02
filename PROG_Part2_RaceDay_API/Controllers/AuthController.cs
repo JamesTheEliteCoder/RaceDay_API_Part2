@@ -26,11 +26,16 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<ActionResult<UserResponse>> Register(RegisterRequest request)
     {
+        // Normalise email so that the registration and login use the same format
         var email = request.Email.Trim().ToLowerInvariant();
 
+        // Return 409 before the database's unique email index rejects a duplicate
         if (await _db.Users.AnyAsync(user => user.Email == email))
         {
-            return Conflict(new { message = "An account with this email already exists." });
+            return Conflict(new
+            {
+                message = "An account with this email already exists."
+            });
         }
 
         var user = new User
@@ -40,32 +45,42 @@ public class AuthController : ControllerBase
             Email = email,
             Role = request.Role,
             PhoneNumber = request.PhoneNumber.Trim(),
+
+            // The Controller returns 400 if required request fields are invalid
             DateOfBirth = request.DateOfBirth!.Value
         };
 
+        // To store only the hash and never the submitted password
         user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
 
         _db.Users.Add(user);
         await _db.SaveChangesAsync();
 
+        // Return the safe response DTO (which does not include PasswordHash)
         return StatusCode(StatusCodes.Status201Created, ToResponse(user));
     }
 
     [HttpPost("login")]
     public async Task<ActionResult<UserResponse>> Login(LoginRequest request)
     {
+        // Use the same email normalisation as registration
         var email = request.Email.Trim().ToLowerInvariant();
         var user = await _db.Users.SingleOrDefaultAsync(user => user.Email == email);
 
+        // Use the same response for unknown emails and incorrect passwords
         if (user is null ||
             _passwordHasher.VerifyHashedPassword(
                 user,
                 user.PasswordHash,
                 request.Password) == PasswordVerificationResult.Failed)
         {
-            return Unauthorized(new { message = "Invalid email or password." });
+            return Unauthorized(new
+            {
+                message = "Invalid email or password."
+            });
         }
 
+        // Session values stay server-side, while the browser receives the session cookie
         HttpContext.Session.SetInt32("UserId", user.UserId);
         HttpContext.Session.SetString("Role", user.Role);
 
