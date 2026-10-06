@@ -79,7 +79,45 @@ public class EventsController : ControllerBase
             raceEvent);
     }
 
+    // Organisers can only update events that were created by them, or that belong to them
+    [HttpPut("{id:int}")]
+    [SessionAuthorize("Organiser")]
+    public async Task<ActionResult<Event>> UpdateEvent(
+        int id,
+        UpdateEventRequest request)
+    {
+        var organiserId = HttpContext.Session.GetInt32("UserId");
 
+        if (organiserId is null)
+        {
+            return Unauthorized();
+        }
+
+        var raceEvent = await _context.Events.FindAsync(id);
+
+        if (raceEvent is null)
+        {
+            return NotFound();
+        }
+
+        if (raceEvent.OrganiserId != organiserId.Value)
+        {
+            return Forbid();
+        }
+
+        raceEvent.Name = request.Name;
+        raceEvent.Description = request.Description;
+        raceEvent.EventDate = request.EventDate;
+        raceEvent.Venue = request.Venue;
+        raceEvent.City = request.City;
+        raceEvent.Province = request.Province;
+        raceEvent.DistanceKm = request.DistanceKm;
+        raceEvent.EventType = request.EventType;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(raceEvent);
+    }
 
 
 } //end of class
