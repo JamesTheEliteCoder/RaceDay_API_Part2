@@ -209,6 +209,94 @@ public class EnrolmentsControllerTests
         Assert.AreEqual(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
+    [TestMethod]
+    public async Task RecordResult_AsOrganiser_ParticipantCanViewIt()
+    {
+        var categoryId = await CreateEventAndCategory();
+        await RegisterAndLogin(_participantClient, "Participant");
+
+        var enrolmentResponse = await _participantClient.PostAsJsonAsync(
+            "/api/events/1/enrolments",
+            new { categoryId });
+
+        Assert.AreEqual(HttpStatusCode.Created, enrolmentResponse.StatusCode);
+
+        var enrolmentJson = JsonDocument.Parse(
+            await enrolmentResponse.Content.ReadAsStringAsync());
+        var enrolmentId = enrolmentJson.RootElement
+            .GetProperty("enrolmentId")
+            .GetInt32();
+
+        var resultResponse = await _organiserClient.PostAsJsonAsync(
+            $"/api/enrolment/{enrolmentId}/result",
+            new
+            {
+                finishingPosition = 1,
+                finishTime = "00:25:30"
+            });
+
+        Assert.AreEqual(HttpStatusCode.Created, resultResponse.StatusCode);
+
+        var participantResults = await _participantClient.GetAsync(
+            "/api/users/me/results");
+
+        Assert.AreEqual(HttpStatusCode.OK, participantResults.StatusCode);
+
+        var resultsJson = JsonDocument.Parse(
+            await participantResults.Content.ReadAsStringAsync());
+
+        Assert.AreEqual(
+            1,
+            resultsJson.RootElement[0]
+                .GetProperty("finishingPosition")
+                .GetInt32());
+    }
+
+
+
+    [TestMethod]
+    public async Task RecordResult_AsParticipant_ReturnsForbidden()
+    {
+        var categoryId = await CreateEventAndCategory();
+        await RegisterAndLogin(_participantClient, "Participant");
+
+        var enrolmentResponse = await _participantClient.PostAsJsonAsync(
+            "/api/events/1/enrolments",
+            new { categoryId });
+
+        Assert.AreEqual(HttpStatusCode.Created, enrolmentResponse.StatusCode);
+
+        var enrolmentJson = JsonDocument.Parse(
+            await enrolmentResponse.Content.ReadAsStringAsync());
+        var enrolmentId = enrolmentJson.RootElement
+            .GetProperty("enrolmentId")
+            .GetInt32();
+
+        var response = await _participantClient.PostAsJsonAsync(
+            $"/api/enrolment/{enrolmentId}/result",
+            new
+            {
+                finishingPosition = 1,
+                finishTime = "00:25:30"
+            });
+
+        Assert.AreEqual(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
