@@ -22,7 +22,7 @@ public class UsersController : ControllerBase
     [HttpGet("me")]
     [SessionAuthorize]
     public async Task<ActionResult<UserResponse>> GetMyProfile()
-    {
+    { //start of GetMyProfile method
         var userId = HttpContext.Session.GetInt32("UserId");
 
         // The filter checks the authentication which also keeps the action safe if it's reused
@@ -49,5 +49,48 @@ public class UsersController : ControllerBase
             PhoneNumber = user.PhoneNumber,
             DateOfBirth = user.DateOfBirth
         });
+    } //end of GetMyProfile method
+
+
+    [HttpPut("me")]
+
+    [SessionAuthorize] //to allow any logged in profile to be able to update their profile
+    public async Task<ActionResult<UserResponse>> UpdateMyProfile(
+    UpdateProfileRequest request)
+    {
+        var userId = HttpContext.Session.GetInt32("UserId");
+
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        var user = await _db.Users.FindAsync(userId.Value);
+
+        if (user is null)
+        {
+            return NotFound(new { message = "User profile not found." });
+        }
+
+        user.FirstName = request.FirstName.Trim();
+        user.LastName = request.LastName.Trim();
+        user.PhoneNumber = request.PhoneNumber.Trim();
+        user.DateOfBirth = request.DateOfBirth!.Value;
+
+        await _db.SaveChangesAsync();
+
+        return Ok(new UserResponse
+        {
+            UserId = user.UserId,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Email = user.Email,
+            Role = user.Role,
+            PhoneNumber = user.PhoneNumber,
+            DateOfBirth = user.DateOfBirth
+        });
     }
-}
+
+
+
+}// end of class
