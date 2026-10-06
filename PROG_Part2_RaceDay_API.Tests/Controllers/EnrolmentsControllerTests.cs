@@ -174,11 +174,40 @@ public class EnrolmentsControllerTests
 
 
 
+    [TestMethod]
+    public async Task GetEventEnrolments_AsOrganiser_ReturnsEnrolments()
+    {
+        var categoryId = await CreateEventAndCategory();
+        await RegisterAndLogin(_participantClient, "Participant");
+
+        var enrolmentResponse = await _participantClient.PostAsJsonAsync(
+            "/api/events/1/enrolments",
+            new { categoryId });
+
+        Assert.AreEqual(HttpStatusCode.Created, enrolmentResponse.StatusCode);
+
+        var response = await _organiserClient.GetAsync(
+            "/api/events/1/enrolments");
+
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.IsTrue(body.Contains(categoryId.ToString()));
+    }
 
 
 
+    [TestMethod]
+    public async Task GetEventEnrolments_AsParticipant_ReturnsForbidden()
+    {
+        await CreateEventAndCategory();
+        await RegisterAndLogin(_participantClient, "Participant");
 
+        var response = await _participantClient.GetAsync(
+            "/api/events/1/enrolments");
 
+        Assert.AreEqual(HttpStatusCode.Forbidden, response.StatusCode);
+    }
 
 
 
