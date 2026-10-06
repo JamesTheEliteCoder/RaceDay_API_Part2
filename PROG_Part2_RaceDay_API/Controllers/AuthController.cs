@@ -24,6 +24,11 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
+    [EndpointSummary("Register an account")]
+    [EndpointDescription("Creates an account for a Participant or Organiser and stores a hashed password.")]
+    [ProducesResponseType(typeof(UserResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<UserResponse>> Register(RegisterRequest request)
     {
         // Normalise email so that the registration and login use the same format
@@ -61,6 +66,11 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [EndpointSummary("Log in")]
+    [EndpointDescription("Verifies the user's credentials and creates a server-side session.")]
+    [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<UserResponse>> Login(LoginRequest request)
     {
         // Use the same email normalisation as registration

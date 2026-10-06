@@ -21,6 +21,11 @@ public class CategoriesController : ControllerBase
     // Authenticated users can view categories for a specific event
     [HttpGet]
     [SessionAuthorize]
+    [EndpointSummary("List categories for an event")]
+    [EndpointDescription("Returns all categories for the requested event. (Requires an authenticated session).")]
+    [ProducesResponseType(typeof(List<Category>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<List<Category>>> GetCategories(int eventId)
     {
         var eventExists = await _context.Events
@@ -45,6 +50,13 @@ public class CategoriesController : ControllerBase
     // Organisers can add categories to their own events.
     [HttpPost]
     [SessionAuthorize("Organiser")]
+    [EndpointSummary("Create an event category")]
+    [EndpointDescription("Creates an age or distance category for an event managed by the signed-in Organiser. The request includes the category details and route ID.")]
+    [ProducesResponseType(typeof(Category), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<Category>> CreateCategory(
         int eventId,
         CreateCategoryRequest request)

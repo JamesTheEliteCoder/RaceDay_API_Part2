@@ -21,6 +21,14 @@ public class ResultsController : ControllerBase
     // Organisers can record a result only for an enrolment in their own event.
     [HttpPost]
     [SessionAuthorize("Organiser")]
+    [EndpointSummary("Record an event result")]
+    [EndpointDescription("Records the finishing position and finish time for an enrolment in an event managed by the signed-in Organiser.")]
+    [ProducesResponseType(typeof(Result), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<Result>> RecordResult(
         int enrolmentId,
         RecordResultRequest request)

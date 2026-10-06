@@ -21,6 +21,14 @@ public class EnrolmentsController : ControllerBase
     // Participants enrol in an event by selecting one of its categories.
     [HttpPost]
     [SessionAuthorize("Participant")]
+    [EndpointSummary("Enrol in an event")]
+    [EndpointDescription("Enrols the signed-in Participant in the event using the selected category ID.")]
+    [ProducesResponseType(typeof(Enrolment), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<Enrolment>> EnrolInEvent(
         int eventId,
         CreateEnrolmentRequest request)
@@ -90,6 +98,12 @@ public class EnrolmentsController : ControllerBase
     // Organisers can view enrolments only for events they manage.
     [HttpGet]
     [SessionAuthorize("Organiser")]
+    [EndpointSummary("List enrolments for an event")]
+    [EndpointDescription("Returns enrolments for an event managed by the signed-in Organiser.")]
+    [ProducesResponseType(typeof(List<Enrolment>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<List<Enrolment>>> GetEventEnrolments(int eventId)
     {
         var organiserId = HttpContext.Session.GetInt32("UserId");

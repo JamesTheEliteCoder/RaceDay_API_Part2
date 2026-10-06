@@ -21,6 +21,13 @@ public class RoutesController : ControllerBase
     // Organisers can add routes to their own events.
     [HttpPost]
     [SessionAuthorize("Organiser")]
+    [EndpointSummary("Create an event route")]
+    [EndpointDescription("Creates a route for an event managed by the signed-in Organiser.")]
+    [ProducesResponseType(typeof(RaceRoute), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<RaceRoute>> CreateRoute(
         int eventId,
         RaceRouteRequest request)
@@ -68,6 +75,13 @@ public class RoutesController : ControllerBase
     // Organisers can update only routes belonging to their own events.
     [HttpPut("{routeId:int}")]
     [SessionAuthorize("Organiser")]
+    [EndpointSummary("Update an event route")]
+    [EndpointDescription("Updates a route belonging to an event managed by the signed-in Organiser.")]
+    [ProducesResponseType(typeof(RaceRoute), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<RaceRoute>> UpdateRoute(
         int eventId,
         int routeId,
