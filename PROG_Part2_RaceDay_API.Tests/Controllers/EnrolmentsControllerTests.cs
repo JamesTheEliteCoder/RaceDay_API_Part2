@@ -154,4 +154,33 @@ public class EnrolmentsControllerTests
 
         Assert.AreEqual(HttpStatusCode.OK, login.StatusCode);
     }
+
+
+
+
+    [TestMethod]
+    public async Task Enrol_WithoutLogin_ReturnsUnauthorized()
+    {
+        var categoryId = await CreateEventAndCategory();
+
+        // This client has not logged in, so the session-protected endpoint should reject it.
+        var response = await _participantClient.PostAsJsonAsync(
+            "/api/events/1/enrolments",
+            new { categoryId });
+
+        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
 }

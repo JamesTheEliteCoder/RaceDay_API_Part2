@@ -85,4 +85,20 @@ public class EventsControllerTests
         distanceKm = 5m,
         eventType = "Run"
     };
+
+
+    [TestMethod]
+    public async Task CreateEvent_WithoutLogin_ReturnsUnauthorized()
+    {
+        var response = await _client.PostAsJsonAsync(
+            "/api/events",
+            ValidEvent());
+
+        Assert.AreEqual(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+
+
+
+
 }
