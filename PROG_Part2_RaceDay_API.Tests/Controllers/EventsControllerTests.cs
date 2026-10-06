@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace PROG_Part2_RaceDay_API.Tests.Controllers;
 
@@ -98,7 +99,71 @@ public class EventsControllerTests
     }
 
 
+    [TestMethod]
+    public async Task UpdateEvent_AsOrganiser_ReturnsOk()
+    {
+        var eventId = await CreateEventAsOrganiser();
 
+        var response = await _client.PutAsJsonAsync(
+            $"/api/events/{eventId}",
+            ValidEvent());
+
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task DeleteEvent_AsOrganiser_ReturnsNoContent()
+    {
+        var eventId = await CreateEventAsOrganiser();
+
+        var response = await _client.DeleteAsync(
+            $"/api/events/{eventId}");
+
+        Assert.AreEqual(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+
+    private async Task<int> CreateEventAsOrganiser()
+    {
+        var email = $"{Guid.NewGuid():N}@test.com";
+        const string password = "TestPassword123!";
+
+        var registration = await _client.PostAsJsonAsync(
+            "/api/auth/register",
+            new
+            {
+                firstName = "Test",
+                lastName = "Organiser",
+                email,
+                password,
+                role = "Organiser",
+                phoneNumber = "0712345678",
+                dateOfBirth = new DateOnly(2000, 1, 1)
+            });
+
+        Assert.AreEqual(HttpStatusCode.Created, registration.StatusCode);
+
+        var login = await _client.PostAsJsonAsync(
+            "/api/auth/login",
+            new { email, password });
+
+        Assert.AreEqual(HttpStatusCode.OK, login.StatusCode);
+
+        var createResponse = await _client.PostAsJsonAsync(
+            "/api/events",
+            ValidEvent());
+
+        Assert.AreEqual(HttpStatusCode.Created, createResponse.StatusCode);
+
+        var eventJson = JsonDocument.Parse(
+            await createResponse.Content.ReadAsStringAsync());
+
+        return eventJson.RootElement
+            .GetProperty("eventId")
+            .GetInt32();
+    }
+
+    
 
 
 }
