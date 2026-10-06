@@ -18,8 +18,9 @@ public class CategoriesController : ControllerBase
         _context = context;
     }
 
-    // Public endpoint that lists the categories for an event.
+    // Authenticated users can view categories for a specific event
     [HttpGet]
+    [SessionAuthorize]
     public async Task<ActionResult<List<Category>>> GetCategories(int eventId)
     {
         var eventExists = await _context.Events
@@ -87,13 +88,16 @@ public class CategoriesController : ControllerBase
             return BadRequest("Distance categories cannot have age limits.");
         }
 
-        var routeBelongsToEvent = await _context.Routes.AnyAsync(
-            route => route.RouteId == request.RouteId &&
-                     route.EventId == eventId);
+        var route = await _context.Routes.FindAsync(request.RouteId);
 
-        if (!routeBelongsToEvent)
+        if (route is null)
         {
-            return BadRequest("The selected route must belong to this event.");
+            return NotFound("The route does not exist.");
+        }
+
+        if (route.EventId != eventId)
+        {
+            return BadRequest("The selected route does not belong to this event.");
         }
 
         var category = new Category

@@ -8,7 +8,7 @@ using PROG_Part2_RaceDay_API.Filters;
 namespace PROG_Part2_RaceDay_API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/events")]
 public class EventsController : ControllerBase
 {
     private readonly RaceDayDbContext _context;
@@ -20,6 +20,7 @@ public class EventsController : ControllerBase
 
     // Public endpoint that lists events in date order.
     [HttpGet]
+    [SessionAuthorize]
     public async Task<ActionResult<List<Event>>> GetEvents()
     {
         var events = await _context.Events
@@ -33,6 +34,7 @@ public class EventsController : ControllerBase
 
     // Public endpoint that returns one event, or error code 404 if it does not exist
     [HttpGet("{id:int}")]
+    [SessionAuthorize]
     public async Task<ActionResult<Event>> GetEvent(int id)
     {
         var raceEvent = await _context.Events.FindAsync(id);
