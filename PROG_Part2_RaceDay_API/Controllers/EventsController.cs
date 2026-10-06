@@ -120,4 +120,55 @@ public class EventsController : ControllerBase
     }
 
 
+    // Organisers can delete only their own events.
+    [HttpDelete("{id:int}")]
+    [SessionAuthorize("Organiser")]
+    public async Task<IActionResult> DeleteEvent(int id)
+    {
+        var organiserId = HttpContext.Session.GetInt32("UserId");
+
+        if (organiserId is null)
+        {
+            return Unauthorized();
+        }
+
+        var raceEvent = await _context.Events.FindAsync(id);
+
+        if (raceEvent is null)
+        {
+            return NotFound();
+        }
+
+        if (raceEvent.OrganiserId != organiserId.Value)
+        {
+            return Forbid();
+        }
+
+        _context.Events.Remove(raceEvent);
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // Related routes, categories, or enrolments can prevent deletion.
+            return Conflict(new
+            {
+                message = "This event cannot be deleted while it has related records."
+            });
+        }
+
+        return NoContent();
+    }
+
+
+
+
+
+
+
+
+
+
 } //end of class
