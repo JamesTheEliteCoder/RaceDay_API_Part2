@@ -116,4 +116,39 @@ public class UsersController : ControllerBase
     }
 
 
+
+
+    // Participants can view only results linked to their own enrolments.
+    [HttpGet("me/results")]
+    [SessionAuthorize("Participant")]
+    public async Task<ActionResult<List<Result>>> GetMyResults()
+    {
+        var participantId = HttpContext.Session.GetInt32("UserId");
+
+        if (participantId is null)
+        {
+            return Unauthorized();
+        }
+
+        var results = await (
+            from result in _db.Results
+            join enrolment in _db.Enrolments
+                on result.EnrolmentId equals enrolment.EnrolmentId
+            where enrolment.ParticipantId == participantId.Value
+            orderby result.FinishingPosition
+            select result
+        ).ToListAsync();
+
+        return Ok(results);
+    }
+
+
+
+
+
+
+
+
+
+
 }// end of class
