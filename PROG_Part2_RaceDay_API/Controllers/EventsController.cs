@@ -2,6 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using PROG_Part2_RaceDay_API.Data;
 using PROG_Part2_RaceDay_API.Models;
+using PROG_Part2_RaceDay_API.DTOs;
+using PROG_Part2_RaceDay_API.Filters;
 
 namespace PROG_Part2_RaceDay_API.Controllers;
 
@@ -43,7 +45,39 @@ public class EventsController : ControllerBase
         return Ok(raceEvent);
     }
 
+    // Organisers can create events. The organiser ID comes from the session.
+    [HttpPost]
+    [SessionAuthorize("Organiser")]
+    public async Task<ActionResult<Event>> CreateEvent(CreateEventRequest request)
+    {
+        var organiserId = HttpContext.Session.GetInt32("UserId");
 
+        if (organiserId is null)
+        {
+            return Unauthorized();
+        }
+
+        var raceEvent = new Event
+        {
+            OrganiserId = organiserId.Value,
+            Name = request.Name,
+            Description = request.Description,
+            EventDate = request.EventDate,
+            Venue = request.Venue,
+            City = request.City,
+            Province = request.Province,
+            DistanceKm = request.DistanceKm,
+            EventType = request.EventType
+        };
+
+        _context.Events.Add(raceEvent);
+        await _context.SaveChangesAsync();
+
+        return CreatedAtAction(
+            nameof(GetEvent),
+            new { id = raceEvent.EventId },
+            raceEvent);
+    }
 
 
 
