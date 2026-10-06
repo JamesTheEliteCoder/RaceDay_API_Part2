@@ -6,6 +6,7 @@ using PROG_Part2_RaceDay_API.DTOs;
 using PROG_Part2_RaceDay_API.Filters;
 using PROG_Part2_RaceDay_API.Models;
 
+
 namespace PROG_Part2_RaceDay_API.Controllers;
 
 [ApiController]
@@ -91,6 +92,28 @@ public class UsersController : ControllerBase
         });
     }
 
+
+
+
+    // Participants can view only their own enrolments.
+    [HttpGet("me/enrolments")]
+    [SessionAuthorize("Participant")]
+    public async Task<ActionResult<List<Enrolment>>> GetMyEnrolments()
+    {
+        var participantId = HttpContext.Session.GetInt32("UserId");
+
+        if (participantId is null)
+        {
+            return Unauthorized();
+        }
+
+        var enrolments = await _db.Enrolments
+            .Where(enrolment => enrolment.ParticipantId == participantId.Value)
+            .OrderByDescending(enrolment => enrolment.EnrolmentDate)
+            .ToListAsync();
+
+        return Ok(enrolments);
+    }
 
 
 }// end of class
