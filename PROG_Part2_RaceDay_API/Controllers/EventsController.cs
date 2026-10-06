@@ -26,4 +26,26 @@ public class EventsController : ControllerBase
 
         return Ok(events);
     }
-}
+
+
+
+    // Public endpoint that returns one event, or error code 404 if it does not exist
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<Event>> GetEvent(int id)
+    {
+        var raceEvent = await _context.Events.FindAsync(id);
+
+        if (raceEvent is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(raceEvent);
+    }
+
+
+
+
+
+
+} //end of class
