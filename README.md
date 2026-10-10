@@ -57,3 +57,6 @@ The implementation will follow the approved 18-endpoint plan. It covers:
 Passwords will be hashed before storage. The Part 1 placeholder password hashes will not be used as login credentials. Session-based authentication and role enforcement are still to be implemented.
 
  
+# CI workflow Screenshot
+
+![Successful GitHub Actions build](docs/images/ci-success.png)
