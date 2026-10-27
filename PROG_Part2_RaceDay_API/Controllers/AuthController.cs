@@ -97,6 +97,24 @@ public class AuthController : ControllerBase
         return Ok(ToResponse(user));
     }
 
+
+
+
+    // Ends the current API session for the logged-in user.
+   
+    [HttpPost("logout")]
+    public IActionResult Logout()
+    {
+        // Remove the user ID and role stored in the API session.
+        HttpContext.Session.Clear();
+
+        // Confirm that the logout request completed successfully.
+        return NoContent();
+    }
+
+
+
+
     private static UserResponse ToResponse(User user)
     {
         return new UserResponse
