@@ -35,7 +35,35 @@ public class EventsController : ControllerBase
         return Ok(events);
     }
 
+    // Organisers can view only the events that belong to them.
+    [HttpGet("mine")]
+    [SessionAuthorize("Organiser")]
+    [EndpointSummary("List my events")]
+    [EndpointDescription(
+        "Returns events belonging to the signed-in Organiser.")]
+    [ProducesResponseType(typeof(List<Event>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<List<Event>>> GetMyEvents()
+    {
+        // Retrieve the organiser's ID from the authenticated API session.
+        var organiserId = HttpContext.Session.GetInt32("UserId");
 
+        // Return 401 if the session does not contain a user ID.
+        if (organiserId is null)
+        {
+            return Unauthorized();
+        }
+
+        // Filter events in the database so organisers see only their own.
+        var events = await _context.Events
+            .Where(raceEvent => raceEvent.OrganiserId == organiserId.Value)
+            .OrderBy(raceEvent => raceEvent.EventDate)
+            .ToListAsync();
+
+        // Return the organiser's events, including an empty list if none exist.
+        return Ok(events);
+    }
 
     // Public endpoint that returns one event, or error code 404 if it does not exist
     [HttpGet("{id:int}")]
