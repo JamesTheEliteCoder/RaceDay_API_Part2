@@ -127,4 +127,36 @@ public class RoutesController : ControllerBase
 
         return Ok(route);
     }
-}
+
+
+
+    // Authenticated users can view routes belonging to a specific event.
+    [HttpGet]
+    [SessionAuthorize]
+    [EndpointSummary("List routes for an event")]
+    [EndpointDescription("Returns all routes associated with the requested event. Requires an authenticated session.")]
+    [ProducesResponseType(typeof(List<RaceRoute>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<List<RaceRoute>>> GetRoutes(int eventId)
+    {
+        // Confirm that the requested event exists.
+        var eventExists = await _context.Events
+            .AnyAsync(raceEvent => raceEvent.EventId == eventId);
+
+        if (!eventExists)
+        {
+            return NotFound();
+        }
+
+        // Retrieve routes associated with this event only.
+        var routes = await _context.Routes
+            .Where(route => route.EventId == eventId)
+            .OrderBy(route => route.RouteId)
+            .ToListAsync();
+
+        return Ok(routes);
+    }
+
+
+}//end of class.
