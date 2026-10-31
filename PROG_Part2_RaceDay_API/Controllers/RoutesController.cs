@@ -48,7 +48,8 @@ public class RoutesController : ControllerBase
 
         if (raceEvent.OrganiserId != organiserId.Value)
         {
-            return Forbid();
+            // Return 403 directly because this API uses custom session authorisation.
+            return StatusCode(StatusCodes.Status403Forbidden);
         }
 
         var route = new RaceRoute
@@ -103,7 +104,8 @@ public class RoutesController : ControllerBase
 
         if (raceEvent.OrganiserId != organiserId.Value)
         {
-            return Forbid();
+            // Return 403 directly because this API uses custom session authorisation.
+            return StatusCode(StatusCodes.Status403Forbidden);
         }
 
         var route = await _context.Routes.FirstOrDefaultAsync(

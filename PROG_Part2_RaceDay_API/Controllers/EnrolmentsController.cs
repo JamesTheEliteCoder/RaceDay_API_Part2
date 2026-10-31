@@ -122,7 +122,8 @@ public class EnrolmentsController : ControllerBase
 
         if (raceEvent.OrganiserId != organiserId.Value)
         {
-            return Forbid();
+            // Return 403 directly because this API uses custom session authorisation.
+            return StatusCode(StatusCodes.Status403Forbidden);
         }
 
         // Retrieve enrolments together with the participant and category details.

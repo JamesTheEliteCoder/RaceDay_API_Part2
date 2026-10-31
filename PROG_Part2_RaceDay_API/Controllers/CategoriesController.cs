@@ -77,7 +77,8 @@ public class CategoriesController : ControllerBase
 
         if (raceEvent.OrganiserId != organiserId.Value)
         {
-            return Forbid();
+            // Return 403 directly because this API uses custom session authorisation.
+            return StatusCode(StatusCodes.Status403Forbidden);
         }
 
         if (request.CategoryType == "Age" &&

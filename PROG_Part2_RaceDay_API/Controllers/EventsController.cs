@@ -155,7 +155,8 @@ public class EventsController : ControllerBase
 
         if (raceEvent.OrganiserId != organiserId.Value)
         {
-            return Forbid();
+            // Return 403 directly because this API uses custom session authorisation.
+            return StatusCode(StatusCodes.Status403Forbidden);
         }
 
         raceEvent.Name = request.Name;
@@ -201,7 +202,8 @@ public class EventsController : ControllerBase
 
         if (raceEvent.OrganiserId != organiserId.Value)
         {
-            return Forbid();
+            // Return 403 directly because this API uses custom session authorisation.
+            return StatusCode(StatusCodes.Status403Forbidden);
         }
 
         _context.Events.Remove(raceEvent);
