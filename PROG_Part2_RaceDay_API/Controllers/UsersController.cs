@@ -111,7 +111,7 @@ public class UsersController : ControllerBase
     [SessionAuthorize("Participant")]
     [EndpointSummary("View my enrolments")]
     [EndpointDescription("Returns enrolments belonging to the signed-in Participant.")]
-    [ProducesResponseType(typeof(List<Enrolment>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<EnrolmentResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<List<Enrolment>>> GetMyEnrolments()

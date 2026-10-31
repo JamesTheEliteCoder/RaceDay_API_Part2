@@ -125,10 +125,28 @@ public class EnrolmentsController : ControllerBase
             return Forbid();
         }
 
-        var enrolments = await _context.Enrolments
-            .Where(enrolment => enrolment.EventId == eventId)
-            .OrderBy(enrolment => enrolment.EnrolmentId)
-            .ToListAsync();
+        // Retrieve enrolments together with the participant and category details.
+        var enrolments = await (
+            from enrolment in _context.Enrolments
+            join participant in _context.Users
+                on enrolment.ParticipantId equals participant.UserId
+            join category in _context.Categories
+                on enrolment.CategoryId equals category.CategoryId
+            where enrolment.EventId == eventId
+            orderby enrolment.EnrolmentId
+            select new EnrolmentResponse
+            {
+                EnrolmentId = enrolment.EnrolmentId,
+                ParticipantId = participant.UserId,
+                ParticipantName = participant.FirstName + " " + participant.LastName,
+                ParticipantEmail = participant.Email,
+                EventId = enrolment.EventId,
+                CategoryId = category.CategoryId,
+                CategoryName = category.Name,
+                EnrolmentDate = enrolment.EnrolmentDate,
+                Status = enrolment.Status
+            }
+        ).ToListAsync();
 
         return Ok(enrolments);
     }
