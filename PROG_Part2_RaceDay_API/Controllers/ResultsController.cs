@@ -4,6 +4,7 @@ using PROG_Part2_RaceDay_API.Data;
 using PROG_Part2_RaceDay_API.DTOs;
 using PROG_Part2_RaceDay_API.Filters;
 using PROG_Part2_RaceDay_API.Models;
+using RaceDay_API_Part2.DTOs;
 
 namespace PROG_Part2_RaceDay_API.Controllers;
 
@@ -94,53 +95,7 @@ public class ResultsController : ControllerBase
 
 
 
-    // Participants can retrieve their own recorded race results.
-    [HttpGet("/api/results/mine")]
-    [SessionAuthorize("Participant")]
-    [EndpointSummary("Retrieve personal race results")]
-    [EndpointDescription("Retrieves all recorded race results belonging to the signed-in Participant.")]
-    [ProducesResponseType(typeof(List<ParticipantResultResponse>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<List<ParticipantResultResponse>>> GetMyResults()
-    {
-        // Retrieve the signed-in participant's ID from the API session.
-        var participantId = HttpContext.Session.GetInt32("UserId");
-
-        if (participantId is null)
-        {
-            return Unauthorized();
-        }
-
-        // Retrieve the participant's results with their associated event and category details.
-        var results = await (
-            from result in _context.Results
-            join enrolment in _context.Enrolments
-                on result.EnrolmentId equals enrolment.EnrolmentId
-            join raceEvent in _context.Events
-                on enrolment.EventId equals raceEvent.EventId
-            join category in _context.Categories
-                on enrolment.CategoryId equals category.CategoryId
-            where enrolment.ParticipantId == participantId.Value
-            orderby raceEvent.EventDate descending
-            select new ParticipantResultResponse
-            {
-                ResultId = result.ResultId,
-                EventId = raceEvent.EventId,
-                EventName = raceEvent.Name,
-                EventDate = raceEvent.EventDate,
-                CategoryName = category.Name,
-                FinishingPosition = result.FinishingPosition,
-                TotalCategoryResults = _context.Results.Count(otherResult =>
-                    _context.Enrolments.Any(otherEnrolment =>
-                        otherEnrolment.EnrolmentId == otherResult.EnrolmentId &&
-                        otherEnrolment.EventId == raceEvent.EventId &&
-                        otherEnrolment.CategoryId == category.CategoryId)),
-                FinishTime = result.FinishTime
-            }
-        ).ToListAsync();
-
-        return Ok(results);
-    }//end of GetMyResults Method
+ 
 
 
 
@@ -274,6 +229,62 @@ public class ResultsController : ControllerBase
 
 
 
+
+
+
+    // Participants can view only their own recorded race results.
+    [HttpGet("/api/results/mine")]
+    [SessionAuthorize("Participant")]
+    [EndpointSummary("Get my race results")]
+    [EndpointDescription("Retrieves all recorded race results belonging to the signed-in participant.")]
+    [ProducesResponseType(typeof(List<ParticipantResultResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<List<ParticipantResultResponse>>> GetMyResults()
+    {
+        // Retrieve the signed-in participant's ID from the API session.
+        var participantId = HttpContext.Session.GetInt32("UserId");
+
+        if (participantId is null)
+        {
+            return Unauthorized();
+        }
+
+        // Retrieve the participant's recorded results, including event and category details.
+        var results = await (
+            from result in _context.Results
+            join enrolment in _context.Enrolments
+                on result.EnrolmentId equals enrolment.EnrolmentId
+            join raceEvent in _context.Events
+                on enrolment.EventId equals raceEvent.EventId
+            join category in _context.Categories
+                on enrolment.CategoryId equals category.CategoryId
+            where enrolment.ParticipantId == participantId.Value
+            orderby raceEvent.EventDate descending
+            select new ParticipantResultResponse
+            {
+                ResultId = result.ResultId,
+                EventId = raceEvent.EventId,
+                EventName = raceEvent.Name,
+                EventDate = raceEvent.EventDate,
+                CategoryName = category.Name,
+                FinishingPosition = result.FinishingPosition,
+
+                // Count recorded results for the same event and category.
+                TotalCategoryResults = (
+                    from otherResult in _context.Results
+                    join otherEnrolment in _context.Enrolments
+                        on otherResult.EnrolmentId equals otherEnrolment.EnrolmentId
+                    where otherEnrolment.EventId == enrolment.EventId
+                          && otherEnrolment.CategoryId == enrolment.CategoryId
+                    select otherResult.ResultId
+                ).Count(),
+
+                FinishTime = result.FinishTime
+            }
+        ).ToListAsync();
+
+        return Ok(results);
+    } // End of GetMyResults method.
 
 
 } //End of Class
