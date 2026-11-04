@@ -91,7 +91,56 @@ public class EnrolmentsController : ControllerBase
         }
 
         return Created($"/api/events/{eventId}/enrolments", enrolment);
-    }
+    }//end of EnrolInEvent
+
+
+
+
+
+
+    // Allows participants to view all events they have enrolled in.
+    [HttpGet("/api/enrolments/mine")]
+    [SessionAuthorize("Participant")]
+    [EndpointSummary("List my event enrolments")]
+    [EndpointDescription("Returns all enrolments belonging to the signed-in Participant.")]
+    [ProducesResponseType(typeof(List<ParticipantEnrolmentResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<List<ParticipantEnrolmentResponse>>> GetMyEnrolments()
+    {
+        // Retrieve the participant ID from the authenticated API session.
+        var participantId = HttpContext.Session.GetInt32("UserId");
+
+        if (participantId is null)
+        {
+            return Unauthorized();
+        }
+
+        // Retrieve only this participant's enrolments, including event and category details.
+        var enrolments = await (
+            from enrolment in _context.Enrolments
+            join raceEvent in _context.Events
+                on enrolment.EventId equals raceEvent.EventId
+            join category in _context.Categories
+                on enrolment.CategoryId equals category.CategoryId
+            where enrolment.ParticipantId == participantId.Value
+            orderby raceEvent.EventDate
+            select new ParticipantEnrolmentResponse
+            {
+                EnrolmentId = enrolment.EnrolmentId,
+                EventId = raceEvent.EventId,
+                EventName = raceEvent.Name,
+                EventDate = raceEvent.EventDate,
+                Venue = raceEvent.Venue,
+                City = raceEvent.City,
+                CategoryName = category.Name,
+                EnrolmentDate = enrolment.EnrolmentDate,
+                Status = enrolment.Status
+            }
+        ).ToListAsync();
+
+        return Ok(enrolments);
+    }//end of GetMyEnrolments
 
 
 
@@ -150,7 +199,7 @@ public class EnrolmentsController : ControllerBase
         ).ToListAsync();
 
         return Ok(enrolments);
-    }
+    }//end of GetEventEnrolments
 
 
 
