@@ -124,11 +124,22 @@ The API uses Entity Framework Core migrations to create and update the database 
 
 For local development, the connection string is configured under `ConnectionStrings:RaceDayDb` in `appsettings.json`. Update the LocalDB server name if your SQL Server instance differs.
 
-Example:
+## 12. Participant Race Results
 
-```json
-"ConnectionStrings": {
-  "RaceDayDb": "Server=(localdb)\\RaceDay_API_DB;Database=RaceDayDB;Trusted_Connection=True;MultipleActiveResultSets=True;TrustServerCertificate=True"
-}
+Implemented the participant's personal race results functionality.
 
+### Features
+- Participants can view their recorded race results.
+- Results are retrieved from the Part 2 API through the MVC API client.
+- Each result displays the event name, event date, category, finishing position and finishing time.
+- Finishing positions use ordinal formatting (1st, 2nd, 3rd, etc.).
+- Displays the number of recorded results in the same event category.
+- Provides an informative empty state when no results are available.
+- Access is restricted to authenticated participants.
+
+### Testing
+- Successfully retrieved participant results from the Part 2 API.
+- Verified that the MVC application displays recorded results correctly.
+- Verified the empty state for participants without recorded results.
+- Confirmed that participant results are retrieved through the API rather than direct database access.
 
