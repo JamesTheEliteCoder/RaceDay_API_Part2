@@ -1,9 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PROG_Part2_RaceDay_API.Data;
-using PROG_Part2_RaceDay_API.Models;
 using PROG_Part2_RaceDay_API.DTOs;
 using PROG_Part2_RaceDay_API.Filters;
+using PROG_Part2_RaceDay_API.Models;
+using PROG_Part2_RaceDay_API.Services;
+using System.IO;
+using System.Linq;
 
 namespace PROG_Part2_RaceDay_API.Controllers;
 
@@ -11,11 +14,16 @@ namespace PROG_Part2_RaceDay_API.Controllers;
 [Route("api/events")]
 public class EventsController : ControllerBase
 {
+    private const long MaxImageSize = 5 * 1024 * 1024; // 5 MB
     private readonly RaceDayDbContext _context;
+    private readonly IBlobStorageService _blobStorageService;
 
-    public EventsController(RaceDayDbContext context)
+    public EventsController(
+     RaceDayDbContext context,
+     IBlobStorageService blobStorageService)
     {
         _context = context;
+        _blobStorageService = blobStorageService;
     }
 
 
@@ -226,10 +234,134 @@ public class EventsController : ControllerBase
 
 
 
+    // Organisers can upload a banner image for their own events.
+    [HttpPost("{id:int}/banner")]
+    [SessionAuthorize("Organiser")]
+    [EndpointSummary("Upload an event banner")]
+    [EndpointDescription("Uploads a banner image to Azure Blob Storage for an event owned by the signed-in Organiser.")]
+    [ProducesResponseType(typeof(Event), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<Event>> UploadBanner(
+        int id,
+        IFormFile image)
+    {
+        // Retrieve the Organiser ID from the authenticated API session.
+        var organiserId = HttpContext.Session.GetInt32("UserId");
+
+        if (organiserId is null)
+        {
+            return Unauthorized();
+        }
+
+        // Find the requested event.
+        var raceEvent = await _context.Events.FindAsync(id);
+
+        if (raceEvent is null)
+        {
+            return NotFound();
+        }
+
+        // Organisers may only upload banners for their own events.
+        if (raceEvent.OrganiserId != organiserId.Value)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden);
+        }
+
+        // Ensure that an image was supplied.
+        if (image is null || image.Length == 0)
+        {
+            return BadRequest(new { message = "Please select an image to upload." });
+        }
+
+        // Enforce the maximum upload size.
+        if (image.Length > MaxImageSize)
+        {
+            return BadRequest(new { message = "The image cannot exceed 5 MB." });
+        }
+
+        // Only allow supported image content types.
+        var allowedContentTypes = new[]
+        {
+    "image/jpeg",
+    "image/png",
+    "image/webp"
+};
+
+        if (!allowedContentTypes.Contains(image.ContentType.ToLowerInvariant()))
+        {
+            return BadRequest(new { message = "Only JPEG, PNG and WebP images are allowed." });
+        }
+
+        // Read the uploaded file into memory for signature validation.
+        await using var imageStream = new MemoryStream();
+
+        await image.CopyToAsync(imageStream);
+
+        // Read the first 12 bytes of the uploaded file.
+        var header = imageStream.ToArray().Take(12).ToArray();
+
+        // Verify that the actual file format matches its declared content type.
+        if (!IsValidImageSignature(header, image.ContentType))
+        {
+            return BadRequest(new
+            {
+                message = "The uploaded file is not a valid JPEG, PNG or WebP image."
+            });
+        }
+
+        // Reset the stream so Azure receives the entire image.
+        imageStream.Position = 0;
+
+        // Upload the verified image to Azure Blob Storage.
+        var imageUrl = await _blobStorageService.UploadImageAsync(
+            imageStream,
+            image.FileName,
+            image.ContentType,
+            "event-banners");
+
+        // Store the resulting URL against the event.
+        raceEvent.BannerImageUrl = imageUrl;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(raceEvent);
+    }//end of UploadBanner method.
 
 
+    //Helper method for UploadBanner
+    // Verify that the file's binary signature matches its declared image type.
+    private static bool IsValidImageSignature(byte[] header, string contentType)
+    {
+        return contentType.ToLowerInvariant() switch
+        {
+            // JPEG signature
+            "image/jpeg" =>
+                header.Length >= 3 &&
+                header[0] == 0xFF &&
+                header[1] == 0xD8 &&
+                header[2] == 0xFF,
 
+            // PNG signature
+            "image/png" =>
+                header.Length >= 8 &&
+                header.Take(8).SequenceEqual(new byte[]
+                {
+                0x89, 0x50, 0x4E, 0x47,
+                0x0D, 0x0A, 0x1A, 0x0A
+                }),
 
+            // WebP signature
+            "image/webp" =>
+                header.Length >= 12 &&
+                header.Take(4).SequenceEqual("RIFF"u8.ToArray()) &&
+                header.Skip(8).Take(4).SequenceEqual("WEBP"u8.ToArray()),
+
+            _ => false
+        };
+    } //end of IsValidImageSignature method.
 
 
 

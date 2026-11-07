@@ -13,6 +13,7 @@ public class CategoriesController : ControllerBase
 {
     private readonly RaceDayDbContext _context;
 
+
     public CategoriesController(RaceDayDbContext context)
     {
         _context = context;
