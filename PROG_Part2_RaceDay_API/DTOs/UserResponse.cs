@@ -9,4 +9,5 @@ public class UserResponse
     public string Role { get; set; } = string.Empty;
     public string PhoneNumber { get; set; } = string.Empty;
     public DateOnly DateOfBirth { get; set; }
+    public string? ProfilePictureUrl { get; set; }
 }
