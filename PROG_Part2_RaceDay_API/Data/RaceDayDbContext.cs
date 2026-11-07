@@ -42,6 +42,7 @@ public class RaceDayDbContext : DbContext
             entity.Property(user => user.Role).HasColumnType("varchar(20)");
             entity.Property(user => user.PhoneNumber).HasColumnType("varchar(11)");
             entity.Property(user => user.DateOfBirth).HasColumnType("date");
+            entity.Property(user => user.ProfilePictureUrl).HasColumnType("varchar(500)");
             entity.Property(user => user.CreatedOn)
                 .HasColumnType("datetime2")
                 .HasDefaultValueSql("GETDATE()");
@@ -71,6 +72,9 @@ public class RaceDayDbContext : DbContext
             entity.Property(eventItem => eventItem.Province).HasColumnType("varchar(50)");
             entity.Property(eventItem => eventItem.DistanceKm).HasColumnType("decimal(6,2)");
             entity.Property(eventItem => eventItem.EventType).HasColumnType("nvarchar(30)");
+            // Store the optional Azure event banner URL.
+            entity.Property(eventItem => eventItem.BannerImageUrl)
+                .HasColumnType("varchar(500)");
             entity.Property(eventItem => eventItem.CreatedOn)
                 .HasColumnType("datetime2")
                 .HasDefaultValueSql("GETDATE()");

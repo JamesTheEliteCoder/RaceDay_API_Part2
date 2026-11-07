@@ -1,7 +1,9 @@
+using Azure.Storage.Blobs;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PROG_Part2_RaceDay_API.Data;
-using Microsoft.AspNetCore.Identity;
 using PROG_Part2_RaceDay_API.Models;
+using PROG_Part2_RaceDay_API.Services;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,6 +24,26 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
+
+// Register Azure Blob Storage using the connection string stored in User Secrets.
+builder.Services.AddSingleton(sp =>
+{
+    var connectionString = builder.Configuration["AzureBlobStorage:ConnectionString"];
+
+    if (string.IsNullOrWhiteSpace(connectionString))
+    {
+        throw new InvalidOperationException(
+            "Azure Blob Storage connection string is not configured.");
+    }
+
+    return new BlobServiceClient(connectionString);
+}); //end of Azure Blob Storage registration
+
+
+// Register the Blob Storage service implementation.
+builder.Services.AddScoped<IBlobStorageService, BlobStorageService>();
+// end of Blob Storage service registration.
+
 
 builder.Services.AddAuthorization();
 // Add services to the container.

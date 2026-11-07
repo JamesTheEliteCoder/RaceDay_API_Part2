@@ -10,5 +10,7 @@ public class User
     public string Role { get; set; } = string.Empty;
     public string PhoneNumber { get; set; } = string.Empty;
     public DateOnly DateOfBirth { get; set; }
+    // Stores the URL of the user's profile picture in Azure Blob Storage.
+    public string? ProfilePictureUrl { get; set; }
     public DateTime CreatedOn { get; set; }
 }

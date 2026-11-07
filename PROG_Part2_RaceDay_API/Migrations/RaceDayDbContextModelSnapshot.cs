@@ -120,6 +120,9 @@ namespace PROG_Part2_RaceDay_API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EventId"));
 
+                    b.Property<string>("BannerImageUrl")
+                        .HasColumnType("varchar(500)");
+
                     b.Property<string>("City")
                         .IsRequired()
                         .HasColumnType("varchar(50)");
@@ -280,6 +283,9 @@ namespace PROG_Part2_RaceDay_API.Migrations
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasColumnType("varchar(11)");
+
+                    b.Property<string>("ProfilePictureUrl")
+                        .HasColumnType("varchar(500)");
 
                     b.Property<string>("Role")
                         .IsRequired()

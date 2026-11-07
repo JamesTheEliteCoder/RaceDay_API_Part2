@@ -12,5 +12,7 @@ public class Event
     public string Province { get; set; } = string.Empty;
     public decimal DistanceKm { get; set; }
     public string EventType { get; set; } = string.Empty;
+    // Stores the URL of the event banner image in Azure Blob Storage.
+    public string? BannerImageUrl { get; set; }
     public DateTime CreatedOn { get; set; }
 }
