@@ -46,9 +46,90 @@ namespace PROG_Part2_RaceDay_API.Services
 
             // Return the blob's URL for storage in our database.
             return blobClient.Uri.ToString();
+        } //end of UploadImageAsync 
+
+
+
+
+
+
+        // Retrieve an image from private Azure Blob Storage.
+        public async Task<(Stream Content, string ContentType)?> GetImageAsync(
+            string imageUrl)
+        {
+            // Make sure the supplied URL is valid.
+            if (!Uri.TryCreate(imageUrl, UriKind.Absolute, out var imageUri))
+            {
+                return null;
+            }
+
+            // Get a reference to our private Azure Blob container.
+            var containerClient = _blobServiceClient.GetBlobContainerClient(ContainerName);
+
+            // Get the container's configured Azure URL.
+            var containerUri = containerClient.Uri;
+
+            // Ensure the URL belongs to our own Azure Storage account.
+            if (!string.Equals(
+                imageUri.Host,
+                containerUri.Host,
+                StringComparison.OrdinalIgnoreCase) ||
+                imageUri.Scheme != Uri.UriSchemeHttps)
+            {
+                return null;
+            }
+
+            // Ensure the image URL points to our expected container.
+            var containerPath = containerUri.AbsolutePath.TrimEnd('/') + "/";
+
+            if (!imageUri.AbsolutePath.StartsWith(
+                containerPath,
+                StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            // Extract the image's name from its URL.
+            var blobName = Uri.UnescapeDataString(
+                imageUri.AbsolutePath[containerPath.Length..]);
+
+            if (string.IsNullOrWhiteSpace(blobName))
+            {
+                return null;
+            }
+
+            // Get a reference to the requested image.
+            var blobClient = containerClient.GetBlobClient(blobName);
+
+            // Check whether the image exists.
+            if (!await blobClient.ExistsAsync())
+            {
+                return null;
+            }
+
+            // Download the image as a stream.
+            var download = await blobClient.DownloadStreamingAsync();
+
+            // Retrieve the image's content type.
+            var contentType = download.Value.Details.ContentType
+                ?? "application/octet-stream";
+
+            // Return the image stream and its content type.
+            return (download.Value.Content, contentType);
         }
-    }
-}
+
+
+
+
+
+
+
+
+
+
+
+    } //end of BlobStorageService class
+} //end of namespace
 
 
 

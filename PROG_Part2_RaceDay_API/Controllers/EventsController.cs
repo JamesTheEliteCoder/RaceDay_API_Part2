@@ -41,6 +41,39 @@ public class EventsController : ControllerBase
             .ToListAsync();
 
         return Ok(events);
+    } //end of GetEvents method.
+
+
+    // Retrieve an event banner from private Azure Blob Storage.
+    [HttpGet("{id:int}/banner")]
+    [SessionAuthorize]
+    [EndpointSummary("Get an event banner")]
+    [EndpointDescription(
+        "Retrieves an event's banner image from private Azure Blob Storage.")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetBanner(int id)
+    {
+        // Find the requested event.
+        var raceEvent = await _context.Events.FindAsync(id);
+
+        if (raceEvent is null || string.IsNullOrWhiteSpace(raceEvent.BannerImageUrl))
+        {
+            return NotFound();
+        }
+
+        // Retrieve the image from Azure Blob Storage.
+        var image = await _blobStorageService.GetImageAsync(
+            raceEvent.BannerImageUrl);
+
+        if (image is null)
+        {
+            return NotFound();
+        }
+
+        // Return the image using its stored content type.
+        return File(image.Value.Content, image.Value.ContentType);
     }
 
     // Organisers can view only the events that belong to them.

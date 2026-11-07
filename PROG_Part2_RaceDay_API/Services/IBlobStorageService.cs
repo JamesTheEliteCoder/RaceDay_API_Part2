@@ -9,5 +9,14 @@
             string fileName,
             string contentType,
             string folderName);
+
+
+        // Retrieves an image from Azure Blob Storage
+        // and returns its content stream and content type.
+        Task<(Stream Content, string ContentType)?> GetImageAsync(
+            string imageUrl);
     }
+
+
+
 }
