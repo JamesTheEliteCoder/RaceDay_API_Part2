@@ -16,7 +16,7 @@ public class UsersController : ControllerBase
 {
     private readonly RaceDayDbContext _db;
     private readonly IBlobStorageService _blobStorageService;
-    private const long MaxImageSize = 5 * 1024 * 1024; // 5 MB
+    private const long MaxImageSize = 12 * 1024 * 1024; // 12MB
     public UsersController(
         RaceDayDbContext db,
         IBlobStorageService blobStorageService)
@@ -148,7 +148,7 @@ public class UsersController : ControllerBase
 
         if (file.Length > MaxImageSize)
         {
-            return BadRequest(new { message = "Image size cannot exceed 5 MB." });
+            return BadRequest(new { message = "Image size cannot exceed 12 MB." });
         }
 
         var allowedContentTypes = new[]
